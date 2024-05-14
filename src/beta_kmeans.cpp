@@ -36,6 +36,7 @@ int BetaKmeans::runThread(int threadId, int maxIterations) {
 
     int startNdx = start(threadId);
     int endNdx = end(threadId);
+    int* listOfEligibleCenters = new int[k];
 
     pointNorms = new double[n];
     for (int i = startNdx; i < endNdx; ++i) {
@@ -56,8 +57,8 @@ int BetaKmeans::runThread(int threadId, int maxIterations) {
     std::sort(normIndexPairs.begin(), normIndexPairs.end());
 
     int numberOfBins = 10; // Define the number of bins
-    bins = new int[n];
-    std::fill(bins, bins + n, 0);
+    //bins = new int[n];
+    //std::fill(bins, bins + n, 0);
 
     // Distribute points into bins
     int pointsPerBin = n / numberOfBins;
@@ -68,15 +69,15 @@ int BetaKmeans::runThread(int threadId, int maxIterations) {
         for (int i = 0; i < pointsPerBin; ++i) {
             int index = bin * pointsPerBin + i;
             if (index < n) {
-                bins[normIndexPairs[index].second] = bin;
+                bins[bin].push_back(normIndexPairs[index].second);
             }
         }
     }
-
     // Handle the last bin separately if n is not divisible by numberOfBins
     for (int i = numberOfBins * pointsPerBin; i < n; ++i) {
-        bins[normIndexPairs[i].second] = numberOfBins - 1;
+        bins[numberOfBins - 1].push_back(normIndexPairs[i].second);
     }
+
 
     beta = new int[k * numberOfBins];
     alpha = new int[k * numberOfBins];
@@ -90,51 +91,61 @@ int BetaKmeans::runThread(int threadId, int maxIterations) {
     while ((iterations < maxIterations) && (! converged)) {
         ++iterations;
 
-        // loop over all examples
-        for (int i = startNdx; i < endNdx; ++i) {
-            // look for the closest center to this example
-            int closest = 0;
-            double closestDist2 = std::numeric_limits<double>::max();
+
+        for (const auto& pair : bins) {
+            int bin = pair.first;
+            int count = 0;
+
             for (int j = 0; j < k; ++j) {
-                if (assignment[i] != j){
-                    if (bins[i] == 0){
-                        if((probabilities[bins[i] * k + j] < threshold) && (probabilities[(bins[i] + 1) * k + j] < threshold)){
-                            //skipped++;
-                            continue;
-                        }
-                    }else if(bins[i] == numberOfBins - 1){
-                        if((probabilities[bins[i] * k + j] < threshold) && (probabilities[(bins[i] - 1) * k + j] < threshold)){
-                            //skipped++;
-                            continue;
-                        }
-                    }else{
-                        if((probabilities[bins[i] * k + j] < threshold)  && (probabilities[(bins[i] - 1) * k + j] < threshold) && (probabilities[(bins[i] + 1) * k + j] < threshold)){
-                            //skipped++;
-                            continue;
-                        }
+                if (bin == 0) {
+                    if ((probabilities[bin * k + j] < threshold) && (probabilities[(bin + 1) * k + j] < threshold)) {
+                        continue;
+                    }
+                } else if (bin == numberOfBins - 1) {
+                    if ((probabilities[bin * k + j] < threshold) && (probabilities[(bin - 1) * k + j] < threshold)) {
+                        continue;
+                    }
+                } else {
+                    if ((probabilities[bin * k + j] < threshold) && (probabilities[(bin - 1) * k + j] < threshold) &&
+                        (probabilities[(bin + 1) * k + j] < threshold)) {
+                        continue;
                     }
                 }
-                //calculated++;
-                double d2 = sqrt(distanceCalculation(x->data + i * x->d, x->data + (i + 1) * x->d, centers->data + j * x->d));
-                #ifdef COUNT_DISTANCES
-                numDistances += 1;
-                #endif
-                if (d2 < closestDist2) {
-                    closest = j;
-                    closestDist2 = d2;
+                listOfEligibleCenters[count++] = j;
+            }
+
+
+            for (int i : pair.second) {
+                int closest = assignment[i];
+                double closestDist2 = sqrt(distanceCalculation(x->data + i * x->d, x->data + (i + 1) * x->d, centers->data + assignment[i] * x->d));
+                for (int j = 0; j < count; ++j) {
+                    if (listOfEligibleCenters[j] == assignment[i]){
+                        continue;
+                    }
+                    double d2 = sqrt(distanceCalculation(x->data + i * x->d, x->data + (i + 1) * x->d, centers->data + listOfEligibleCenters[j] * x->d));
+                    #ifdef COUNT_DISTANCES
+                    numDistances += 1;
+                    #endif
+                    if (d2 < closestDist2) {
+                        closest = listOfEligibleCenters[j];
+                        closestDist2 = d2;
+                    }
+                }
+                for (int j = 0; j < k; ++j) {
+                    if (closest == j) {
+                        alpha[bin * k + j]++;
+                    }else{
+                        beta[bin * k + j]++;
+                    }
+                }
+
+                if (assignment[i] != closest) {
+                    changeAssignment(i, closest, threadId);
                 }
             }
-            for (int j = 0; j < k; ++j) {
-                if (closest == j) {
-                    alpha[bins[i] * k + j]++;
-                }else{
-                    beta[bins[i] * k + j]++;
-                }
-            }
-            if (assignment[i] != closest) {
-                changeAssignment(i, closest, threadId);
-            }
+
         }
+
         for (int i = 0; i < k * numberOfBins; i++){
             probabilities[i] = (double)(alpha[i] - 1) / (alpha[i] + beta[i] - 2);
         }
