@@ -10,6 +10,8 @@
  * applied. Also known as Lloyd's algorithm.
  */
 
+#include <unordered_map>
+#include <vector>
 #include "original_space_kmeans.h"
 
 class BetaKmeans : public OriginalSpaceKmeans {
@@ -19,7 +21,7 @@ class BetaKmeans : public OriginalSpaceKmeans {
     protected:
         virtual int runThread(int threadId, int maxIterations);
         double *pointNorms;
-        int *bins;
+        std::unordered_map<int, std::vector<int>> bins; //change to vector
         int *beta;
         int *alpha;
         double *probabilities;
