@@ -23,6 +23,7 @@ class HamerlyKmeans : public TriangleInequalityBaseKmeans {
         void update_bounds(int startNdx, int endNdx);
 
         virtual int runThread(int threadId, int maxIterations);
+
 };
 
 #endif

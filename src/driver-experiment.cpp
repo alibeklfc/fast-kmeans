@@ -48,6 +48,8 @@
 #include "heap_kmeans.h"
 #include "naive_kernel_kmeans.h"
 #include "elkan_kernel_kmeans.h"
+#include "projected_kmeans.h"
+#include "random_skip_kmeans.h"
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -66,6 +68,19 @@ void execute(std::string command, Kmeans *algorithm, Dataset const *x, unsigned 
         , std::vector<double> *sseHistory
         #endif
         );
+
+double getDistortion(Dataset const *x, unsigned short *assignment, Dataset *centers){
+    double result = 0.0;
+    for(int i = 0; i < x->n; i++){
+        double temp = 0;
+        for(int j = 0; j < x->d; j++){
+            temp = temp + (x->data[i * x->d + j] - centers->data[assignment[i] * x->d + j]) *
+                          (x->data[i * x->d + j] - centers->data[assignment[i] * x->d + j]);
+        }
+        result = result + temp;
+    }
+    return result / x->n;
+}
 
 int main(int argc, char **argv) {
     // The set of data points; the set of centers
@@ -230,6 +245,23 @@ int main(int argc, char **argv) {
             algorithm = new SortKmeans();
         } else if (command == "heap") {
             algorithm = new HeapKmeans();
+        } else if (command == "projected") {
+            algorithm = new ProjectedKmeans();
+
+            double redDim;
+            std::cin >> redDim;
+
+            auto* rsk = dynamic_cast<ProjectedKmeans*>(algorithm);
+            rsk->setReducedDim(redDim);
+        } else if (command == "randomskip") {
+            algorithm = new RandomSkipKmeans();
+
+            double perc;
+            std::cin >> perc;
+
+            auto* rsk = dynamic_cast<RandomSkipKmeans*>(algorithm);
+            rsk->setPercentage(perc);
+
         } else if (command == "kernel" || command == "elkan_kernel") {
             std::string kernelType;
             std::cin >> kernelType;
@@ -288,6 +320,7 @@ int main(int argc, char **argv) {
                     , &sseHistory
                     #endif
                    );
+            std::cout << std::fixed << "Distortion: " << getDistortion(x, outAssignment, outCenters) << std::endl;
             delete algorithm;
             algorithm = NULL;
         }

@@ -93,14 +93,29 @@ void OriginalSpaceKmeans::changeAssignment(int xIndex, int closestCluster, int t
 }
 
 double OriginalSpaceKmeans::pointPointInnerProduct(int x1, int x2) const {
-    return std::inner_product(x->data + x1 * d, x->data + (x1 + 1) * d, x->data + x2 * d, 0.0);
+    //return std::inner_product(x->data + x1 * d, x->data + (x1 + 1) * d, x->data + x2 * d, 0.0);
+    double result = 0.0;
+    for (int i = 0; i < d; ++i) {
+        result += x->data[x1 * d + i] * x->data[x2 * d + i];
+    }
+    return result;
 }
 
 double OriginalSpaceKmeans::pointCenterInnerProduct(int xndx, unsigned short cndx) const {
-    return std::inner_product(x->data + xndx * d, x->data + (xndx + 1) * d, centers->data + cndx * d, 0.0);
+    double result = 0.0;
+    for (int i = 0; i < d; ++i) {
+        result += x->data[xndx * d + i] * centers->data[cndx * d + i];
+    }
+    return result;
 }
 
 double OriginalSpaceKmeans::centerCenterInnerProduct(unsigned short c1, unsigned short c2) const {
-    return std::inner_product(centers->data + c1 * d, centers->data + (c1 + 1) * d, centers->data + c2 * d, 0.0);
+    double result = 0.0;
+    for (int i = 0; i < d; ++i) {
+        result += centers->data[c1 * d + i] * centers->data[c2 * d + i];
+    }
+    return result;
 }
+
+
 
