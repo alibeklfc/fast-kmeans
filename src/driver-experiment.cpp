@@ -50,6 +50,10 @@
 #include "elkan_kernel_kmeans.h"
 #include "projected_kmeans.h"
 #include "random_skip_kmeans.h"
+#include "beta_kmeans.h"
+#include "beta_hamerly_kmeans.h"
+#include "annealing_elkan_kmeans.h"
+#include "annealing_hamerly_kmeans.h"
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -245,6 +249,14 @@ int main(int argc, char **argv) {
             algorithm = new SortKmeans();
         } else if (command == "heap") {
             algorithm = new HeapKmeans();
+        } else if (command == "beta") {
+            algorithm = new BetaKmeans();
+        } else if (command == "betahamerly") {
+            algorithm = new BetaHamerlyKmeans();
+        } else if (command == "anelkan") {
+            algorithm = new AnnealingElkanKmeans();
+        } else if (command == "anhamerly") {
+            algorithm = new AnnealingHamerlyKmeans();
         } else if (command == "projected") {
             algorithm = new ProjectedKmeans();
 
@@ -313,7 +325,7 @@ int main(int argc, char **argv) {
         }
 
         if (algorithm) {
-            execute(command, algorithm, x, k, assignment, 
+            execute(command, algorithm, x, k, assignment,
                     outAssignment, outCenters,
                     xcNdx, numThreads, maxIterations, &numItersHistory
                     #ifdef MONITOR_ACCURACY

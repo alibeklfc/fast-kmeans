@@ -23,11 +23,8 @@ private:
 
     Dataset* reduced;
     Dataset* redData;
-    Dataset* redOutCenters;
     Dataset* outCenters;
 
-    unsigned short* assignment2;
-    unsigned short* outAssignment;
 
     HamerlyKmeans* algorithm;
     HamerlyKmeans* algorithm2;

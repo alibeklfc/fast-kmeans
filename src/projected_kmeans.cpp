@@ -16,17 +16,20 @@
  *
  * Return value: the number of iterations performed (always at least 1)
  */
+double getDistortion2(Dataset const *x, unsigned short *assignment, Dataset *centers){
+    double result = 0.0;
+    for(int i = 0; i < x->n; i++){
+        double temp = 0;
+        for(int j = 0; j < x->d; j++){
+            temp = temp + (x->data[i * x->d + j] - centers->data[assignment[i] * x->d + j]) *
+                          (x->data[i * x->d + j] - centers->data[assignment[i] * x->d + j]);
+        }
+        result = result + temp;
+    }
+    return result / x->n;
+}
 
 int ProjectedKmeans::runThread(int threadId, int maxIterations) {
-    Dataset* initCenters = init_centers_kmeanspp_v2(*x, k);
-
-    delete[] assignment;
-    assignment = new unsigned short[x->n];
-    delete[] assignment2;
-    assignment2 = new unsigned short[x->n];
-
-    std::fill(assignment, assignment + x->n, 0);
-    assign(*x, *initCenters, assignment);
 
     delete reduced;
     reduced = new Dataset(x->d, this->redDim);
@@ -40,32 +43,19 @@ int ProjectedKmeans::runThread(int threadId, int maxIterations) {
 
     algorithm = new HamerlyKmeans();
     algorithm2 = new HamerlyKmeans();
-    std::copy(assignment, assignment + x->n, assignment2);
-
-
-    delete redOutCenters;
-    redOutCenters = new Dataset(k, this->redDim);
-    delete[] outAssignment;
-    outAssignment = new unsigned short[x->n];
-    std::copy(assignment, assignment + x->n, outAssignment);
 
     algorithm->initialize(redData, k, assignment, numThreads);
     algorithm->run(maxIterations);
-    *redOutCenters = *algorithm->getCenters();
-
-    // Copy assignments from projected space
-    std::copy(assignment, assignment + x->n, outAssignment);
 
     delete outCenters;
     outCenters = new Dataset(k, x->d);
 
-    algorithm2->initialize(x, k, outAssignment, numThreads);
+    algorithm2->initialize(x, k, assignment, numThreads);
     int finalIterations = algorithm2->run(40);
 
     *outCenters = *algorithm2->getCenters();
-    std::copy(outAssignment, outAssignment + x->n, assignment);
 
-    delete initCenters;
+    this->centers = outCenters;
 
     return finalIterations;
 }
