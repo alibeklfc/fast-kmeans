@@ -258,22 +258,13 @@ int main(int argc, char **argv) {
         } else if (command == "anhamerly") {
             algorithm = new AnnealingHamerlyKmeans();
         } else if (command == "projected") {
-            algorithm = new ProjectedKmeans();
-
-            double redDim;
+            int redDim;
             std::cin >> redDim;
-
-            auto* rsk = dynamic_cast<ProjectedKmeans*>(algorithm);
-            rsk->setReducedDim(redDim);
+            algorithm = new ProjectedKmeans(redDim);
         } else if (command == "randomskip") {
-            algorithm = new RandomSkipKmeans();
-
             double perc;
             std::cin >> perc;
-
-            auto* rsk = dynamic_cast<RandomSkipKmeans*>(algorithm);
-            rsk->setPercentage(perc);
-
+            algorithm = new RandomSkipKmeans(perc);
         } else if (command == "kernel" || command == "elkan_kernel") {
             std::string kernelType;
             std::cin >> kernelType;
@@ -332,7 +323,9 @@ int main(int argc, char **argv) {
                     , &sseHistory
                     #endif
                    );
+
             std::cout << std::fixed << "Distortion: " << getDistortion(x, outAssignment, outCenters) << std::endl;
+
             delete algorithm;
             algorithm = NULL;
         }

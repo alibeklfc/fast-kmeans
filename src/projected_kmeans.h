@@ -13,10 +13,9 @@
 
 class ProjectedKmeans : public OriginalSpaceKmeans{
 public:
+    ProjectedKmeans(int dim) : redDim(dim) {}
     virtual ~ProjectedKmeans() { free(); }
     virtual std::string getName() const { return "projected"; }
-    void setReducedDim(double d) { redDim = d; }
-
 
 private:
     int redDim;
@@ -29,7 +28,6 @@ private:
     HamerlyKmeans* algorithm;
     HamerlyKmeans* algorithm2;
 
-    void reduceDataset(Dataset* x);
     virtual int runThread(int threadId, int maxIterations);
 
     void GramSchmidt(const Dataset *x, unsigned short k, Dataset *reduced, int redDim);

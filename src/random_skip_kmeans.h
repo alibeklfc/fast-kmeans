@@ -11,9 +11,9 @@
 
 class RandomSkipKmeans : public OriginalSpaceKmeans {
     public:
+        RandomSkipKmeans(double perc) : percentage(perc) {}
         virtual std::string getName() const { return "randomskip"; }
         virtual ~RandomSkipKmeans() { free(); }
-        void setPercentage(double p) { percentage = p; }
 
 protected:
         virtual int runThread(int threadId, int maxIterations);

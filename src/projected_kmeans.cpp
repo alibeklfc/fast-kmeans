@@ -16,24 +16,14 @@
  *
  * Return value: the number of iterations performed (always at least 1)
  */
-double getDistortion2(Dataset const *x, unsigned short *assignment, Dataset *centers){
-    double result = 0.0;
-    for(int i = 0; i < x->n; i++){
-        double temp = 0;
-        for(int j = 0; j < x->d; j++){
-            temp = temp + (x->data[i * x->d + j] - centers->data[assignment[i] * x->d + j]) *
-                          (x->data[i * x->d + j] - centers->data[assignment[i] * x->d + j]);
-        }
-        result = result + temp;
-    }
-    return result / x->n;
-}
+
 
 int ProjectedKmeans::runThread(int threadId, int maxIterations) {
 
-    delete reduced;
+
     reduced = new Dataset(x->d, this->redDim);
     generateRandomMatrix(this->redDim, x, reduced);
+
     GramSchmidt(x, k, reduced, this->redDim);
     normalizeMatrix(reduced, this->redDim, x);
 
@@ -56,6 +46,12 @@ int ProjectedKmeans::runThread(int threadId, int maxIterations) {
     *outCenters = *algorithm2->getCenters();
 
     this->centers = outCenters;
+
+    delete reduced;
+    delete redData;
+    delete algorithm;
+    delete algorithm2;
+
 
     return finalIterations;
 }
